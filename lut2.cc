@@ -5,6 +5,8 @@
  * precomputed results for that string. The mapping is done by
  * mashing together the only 16 significant bits out of the 4 bytes
  * into a 2-byte array index.
+ * This version intentionally leaks memory, and should probably be 
+ * rewritten to use constexpr instead of static.
  */
 #include "converter.h"
 

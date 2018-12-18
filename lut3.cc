@@ -4,7 +4,8 @@
  * to the corresponding number, possibly pre-multiplying it by a
  * constant factor.
  * Note: this version leaks some memory for the static LUT. It can
- * be easily encapsulated in a singleton to take care of deallocating.
+ * be easily encapsulated in a singleton to take care of deallocating,
+ * or preferably reimplemented using constexpr.
  */
 #include "converter.h"
 #include <stdlib.h>
