@@ -134,21 +134,21 @@ inline quote_t convert(const char *str)
 
 This version (`defered3.cc`) improves on defered2 by unrolling the outer loop, the one in the `convert_all` function (basically combining `defered2.cc` with `unroll3.cc`. The idea is to replace the loop that looks like:
 
-``
+```
 for (unsigned i = 0; i < nlines; i++) {
   nums[i] = atoi(lines[i]);
 }
-``
+```
 
 with code that looks like this:
 
-``
+```
 for (unsigned i = 0; i < nlines; i+= 3) {
   *nums++ = convert(*lines++);
   *nums++ = convert(*lines++);
   *nums++ = convert(*lines++);
 }
-``
+```
 
 In this example, the unrolling factor is 3, which may not be optimal. To experiment with different values, and to remove ugly redundancy from the code, I employed a template programming trick that allows me to inline a function an arbitrary number of times with template recursion. With this, I found the optimal unroll factor to be 5 for this program.
 
