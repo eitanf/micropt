@@ -83,14 +83,18 @@ int main(int argc, char *argv[])
   // Finally, main timing loop:
   double min_t = 1000000000.;
   uint32_t *nums = (uint32_t *)calloc(sizeof(uint32_t), nlines);
-  for (int iter = atoi(argv[2]); iter > 0; --iter) {
+  const int niter = atoi(argv[2]);
+
+  for (int iter = 0; iter < niter; ++iter) {
     if (!(iter % 1000)) {
       printf("On iteration #%d\n", iter);
     }
     swap_random_pair(lines, nlines);
+
     clock_t t0 = clock();
     convert_all(nlines, lines, nums);
     double t = (double)(clock() - t0) / CLOCKS_PER_SEC;
+
     assert(equal(nums, lines, nlines));
     if (t < min_t) {
       min_t = t;

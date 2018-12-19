@@ -156,26 +156,30 @@ In this example, the unrolling factor is 3, which may not be optimal. To experim
 
 The following table summarizes the performance of all of these versions. The performance is the minimum run time (among 5,000 iterations) on a Xeon E5-2695v3 CPU on Linux 4.4.0-139 using g++ v. 5.5 and Boost v. 1.58 (g++ v. 8.1, 7.4 and 6.5 proved to be slower on the last example). It is ordered in ascending speedup relative to `atoi()`. In addition, the last column also shows run time when compiled with clang++ v. 6.0.0.
 
-| filename | speedup | g++-5 E2695v3 (s) | g++-5 1950x (s) | clang-6 E2695v3 (s) |
-| -------- | ---- | ------- | ------- |
-| boost      |   74% | 0.080053 | 0.092607 |
-| atoi       |  100% | 0.059286 | 0.059126 |
-| sse        |  319% | 0.018580 | 0.022447 |
-| lut2       |  501% | 0.011824 | 0.010519 |
-| avx        |  805% | 0.007366 | 0.007049 |
-| lut1       |  827% | 0.007167 | 0.007090 |
-| bits       |  841% | 0.007053 | 0.006925 |
-| naive      |  957% | 0.006195 | 0.008772 |
-| bits-satoi | 1035% | 0.005729 | 0.005214 |
-| lut3       | 1104% | 0.005367 | 0.007224 |
-| unroll3    | 1155% | 0.005131 | 0.008669 |
-| unroll1    | 1161% | 0.005106 | 0.010113 |
-| unroll2    | 1277% | 0.004642 | 0.009518 |
-| satoi      | 1326% | 0.004470 | 0.004646 |
-| defered1   | 1347% | 0.004402 | 0.004243 |
-| reorder    | 1416% | 0.004186 | 0.004229 |
-| unroll4    | 1517% | 0.003908 | 0.004159 |
-| defered2   | 1532% | 0.003869 | 0.004323 |
-| defered3   | 1637% | 0.003622 | 0.006599 |
+| filename | speedup | g++-5 E2695v3 (s) | clang-6 E2695v3 (s) | g++-5 1950x (s) |
+| ---------- | ----- | -------- | -------- | -------- |
+| boost      |   74% | 0.080053 | 0.092607 | 0.065608 |
+| atoi       |  100% | 0.059286 | 0.059126 | 0.052520 |
+| sse        |  319% | 0.018580 | 0.022447 | 0.012105 |
+| lut2       |  501% | 0.011824 | 0.010519 | 0.008738 |
+| avx        |  805% | 0.007366 | 0.007049 | 0.006134 |
+| lut1       |  827% | 0.007167 | 0.007090 | 0.005199 |
+| bits       |  841% | 0.007053 | 0.006925 | 0.005634 |
+| naive      |  957% | 0.006195 | 0.008772 | 0.006328 |
+| bits-satoi | 1035% | 0.005729 | 0.005214 | 0.005274 |
+| lut3       | 1104% | 0.005367 | 0.007224 | 0.003933 |
+| unroll3    | 1155% | 0.005131 | 0.008669 | 0.005364 |
+| unroll1    | 1161% | 0.005106 | 0.010113 | 0.005133 |
+| unroll2    | 1277% | 0.004642 | 0.009518 | 0.004890 |
+| satoi      | 1326% | 0.004470 | 0.004646 | 0.005113 |
+| defered1   | 1347% | 0.004402 | 0.004243 | 0.005592 |
+| reorder    | 1416% | 0.004186 | 0.004229 | 0.005429 |
+| unroll4    | 1517% | 0.003908 | 0.004159 | 0.004687 |
+| defered2   | 1532% | 0.003869 | 0.004323 | 0.005575 |
+| defered3   | 1637% | 0.003622 | 0.006599 | 0.005431 |
+
+Here's the same data in visual form:
+
+![performance-chart](performance-comparison.png)
 
 It is interesting how many different solutions exist to the same simple problem, with most handily beating an optimized library function when tailoring it to a specific workload and assumptions. The best example here gets a reduction of some 94% of the original run time, which was pretty fast to begin with!
