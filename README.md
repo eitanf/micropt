@@ -134,7 +134,7 @@ inline quote_t convert(const char *str)
 
 This version (`defered3.cc`) improves on defered2 by unrolling the outer loop, the one in the `convert_all` function (basically combining `defered2.cc` with `unroll3.cc`. The idea is to replace the loop that looks like:
 
-```
+```C
 for (unsigned i = 0; i < nlines; i++) {
   nums[i] = atoi(lines[i]);
 }
@@ -142,7 +142,7 @@ for (unsigned i = 0; i < nlines; i++) {
 
 with code that looks like this:
 
-```
+```C
 for (unsigned i = 0; i < nlines; i+= 3) {
   *nums++ = convert(*lines++);
   *nums++ = convert(*lines++);
