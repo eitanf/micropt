@@ -148,7 +148,7 @@ for (unsigned i = 0; i < nlines; i+= 3) {
   *nums++ = convert(*lines++);
   *nums++ = convert(*lines++);
 }
-```
+``
 
 In this example, the unrolling factor is 3, which may not be optimal. To experiment with different values, and to remove ugly redundancy from the code, I employed a template programming trick that allows me to inline a function an arbitrary number of times with template recursion. With this, I found the optimal unroll factor to be 5 for this program.
 
