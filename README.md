@@ -86,7 +86,7 @@ This version (`bits.cc`) uses the same naive implementation, but replaces the ar
 
 ### Unrolled
 
-This version (`unroll.cc`) uses a single loop with a bounded number of iterations, which the optimizer can sometimes completely unroll on its own (not always, however). There's a slightly faster (and more complicated) version in `unroll2.cc` that improves performance by pipelining operations better.
+This version (`unroll1.cc`) uses a single loop with a bounded number of iterations, which the optimizer can sometimes completely unroll on its own (not always, however). There's a slightly faster (and more complicated) version in `unroll2.cc` that improves performance by pipelining operations better. A different take on unrolling (`unroll3.cc`) unrolls the convert_all loop instead of the one in convert. Yet another version by a student (`unroll4.cc`) takes this idea to an extreme by unrolling both the convert and convert_all loop together into many small instructions, giving the compiler ample opportunity to reorder instructions and increase instruction-level parallelism.
 
 ### Shortcut atoi
 
@@ -99,11 +99,11 @@ This version (`reorder.cc`) adds two small but measurable improvements to `satoi
 
 ### Defered zeros
 
-This version (`defered.cc`) by a student cleverly defers the substraction of the '0' characters from the digits till after the conversion has been done, and then takes care of it in a single substraction. It also uses GCC's intrisinc to help the compiler anticipate which branches are more likely than others. In my experiments, these hints do nothing to help, because the CPU can predict branches quite accurately, but usually don't hurt either.
+This version (`defered1.cc`) by a student cleverly defers the substraction of the '0' characters from the digits till after the conversion has been done, and then takes care of it in a single substraction. It also uses GCC's intrisinc to help the compiler anticipate which branches are more likely than others. In my experiments, these hints do nothing to help, because the CPU can predict branches quite accurately, but usually don't hurt either.
 
 ### Reordered defered zeros
 
-This version (`defered-reorder.cc`) Combines the unified substraction trick from `defered.cc` with the early-termination branch reordering from `reoder.cc` to produce the fastest implementation in this set. The complete conversion function looks like this:
+This version (`defered2.cc`) Combines the unified substraction trick from `defered1.cc` with the early-termination branch reordering from `reoder.cc` to produce the fastest implementation in this set. The complete conversion function looks like this:
 
 ```C
 inline quote_t convert(const char *str)
@@ -130,27 +130,52 @@ inline quote_t convert(const char *str)
 }
 ```
 
+### Reordered defered zeros
+
+This version (`defered3.cc`) improves on defered2 by unrolling the outer loop, the one in the `convert_all` function (basically combining `defered2.cc` with `unroll3.cc`. The idea is to replace the loop that looks like:
+
+``
+for (unsigned i = 0; i < nlines; i++) {
+  nums[i] = atoi(lines[i]);
+}
+``
+
+with code that looks like this:
+
+``
+for (unsigned i = 0; i < nlines; i+= 3) {
+  *nums++ = convert(*lines++);
+  *nums++ = convert(*lines++);
+  *nums++ = convert(*lines++);
+}
+```
+
+In this example, the unrolling factor is 3, which may not be optimal. To experiment with different values, and to remove ugly redundancy from the code, I employed a template programming trick that allows me to inline a function an arbitrary number of times with template recursion. With this, I found the optimal unroll factor to be 5 for this program.
+
 ## Summary
 
 The following table summarizes the performance of all of these versions. The performance is the minimum run time (among 5,000 iterations) on a Xeon E5-2695v3 CPU on Linux 4.4.0-139 using g++ v. 5.5 and Boost v. 1.58 (g++ v. 8.1, 7.4 and 6.5 proved to be slower on the last example). It is ordered in ascending speedup relative to `atoi()`. In addition, the last column also shows run time when compiled with clang++ v. 6.0.0.
 
-| filename | time(s) | speedup | clang(s) |
+| filename | speedup | g++-5 E2695v3 (s) | g++-5 1950x (s) | clang-6 E2695v3 (s) |
 | -------- | ---- | ------- | ------- |
-| boost           | 0.080053 |  | 0.092607 |
-| atoi            | 0.059286 | 1.00 | 0.059126 |
-| sse             | 0.018580 |  | 0.022447 |
-| lut2            | 0.011824 |  | 0.010519 |
-| lut1            | 0.007167 |  | 0.007090 |
-| avx             | 0.007366 |  | 0.007049 |
-| bits            | 0.007053 |  | 0.006925 |
-| naive           | 0.006195 |  | 0.008772 |
-| bits-satoi      | 0.005729 |  | 0.005214 |
-| lut3            | 0.005367 |  | 0.007224 |
-| unroll          | 0.005106 |  | 0.010113 |
-| unroll2         | 0.004642 |  | 0.009518 |
-| satoi           | 0.004470 |  | 0.004646 |
-| defered         | 0.004402 |  | 0.004243 |
-| reorder         | 0.004186 |  | 0.004229 |
-| defered-reorder | 0.003869 |  | 0.004323 |
+| boost      |   74% | 0.080053 | 0.092607 |
+| atoi       |  100% | 0.059286 | 0.059126 |
+| sse        |  319% | 0.018580 | 0.022447 |
+| lut2       |  501% | 0.011824 | 0.010519 |
+| avx        |  805% | 0.007366 | 0.007049 |
+| lut1       |  827% | 0.007167 | 0.007090 |
+| bits       |  841% | 0.007053 | 0.006925 |
+| naive      |  957% | 0.006195 | 0.008772 |
+| bits-satoi | 1035% | 0.005729 | 0.005214 |
+| lut3       | 1104% | 0.005367 | 0.007224 |
+| unroll3    | 1155% | 0.005131 | 0.008669 |
+| unroll1    | 1161% | 0.005106 | 0.010113 |
+| unroll2    | 1277% | 0.004642 | 0.009518 |
+| satoi      | 1326% | 0.004470 | 0.004646 |
+| defered1   | 1347% | 0.004402 | 0.004243 |
+| reorder    | 1416% | 0.004186 | 0.004229 |
+| unroll4    | 1517% | 0.003908 | 0.004159 |
+| defered2   | 1532% | 0.003869 | 0.004323 |
+| defered3   | 1637% | 0.003622 | 0.006599 |
 
-It is interesting how many different solutions exist to the same simple problem, with most handily beating an optimized library function when tailoring it to a specific workload and assumptions. The best example here achieves a reduction of nearly 90% of the original run time, which is fast to begin with.
+It is interesting how many different solutions exist to the same simple problem, with most handily beating an optimized library function when tailoring it to a specific workload and assumptions. The best example here gets a reduction of some 94% of the original run time, which was pretty fast to begin with!
