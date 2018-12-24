@@ -88,6 +88,7 @@ This version (`bits.cc`) uses the same naive implementation, but replaces the ar
 
 This version (`unroll1.cc`) uses a single loop with a bounded number of iterations, which the optimizer can sometimes completely unroll on its own (not always, however). There's a slightly faster (and more complicated) version in `unroll2.cc` that improves performance by pipelining operations better. A different take on unrolling (`unroll3.cc`) unrolls the convert_all loop instead of the one in convert. Yet another version by a student (`unroll4.cc`) takes this idea to an extreme by unrolling both the convert and convert_all loop together into many small instructions, giving the compiler ample opportunity to reorder instructions and increase instruction-level parallelism.
 
+
 ### Shortcut atoi
 
 This version (`satoi.cc`) improves the naive version, by explicitly unrolling the loop for 3 cases only and eliminating the loop overhead. It starts by computing the first three digits (which are always defined for this input), then computes up to two more digits as needed. A student implemented a similar idea in `bits-satoi.cc`.
@@ -130,7 +131,7 @@ inline quote_t convert(const char *str)
 }
 ```
 
-### Reordered defered zeros
+### Unrolled reordered defered zeros
 
 This version (`defered3.cc`) improves on defered2 by unrolling the outer loop, the one in the `convert_all` function (basically combining `defered2.cc` with `unroll3.cc`. The idea is to replace the loop that looks like:
 
@@ -151,8 +152,13 @@ for (unsigned i = 0; i < nlines; i+= 3) {
 ```
 
 In this example, the unrolling factor is 3, which may not be optimal. To experiment with different values, and to remove ugly redundancy from the code, I employed a template programming trick that allows me to inline a function an arbitrary number of times with template recursion. With this, I found the optimal unroll factor to be 5 for this program.
+We can improved further in yet another variation (`defered4.cc`) that breaks down the arithmetic operations of each case (string length), so that the compiler has more opportunity to rearrange and optimize instructions.
 
-## Summary
+### No-branch defered zeros
+
+Because having a lot of instructions is not necessarily bad (but branches potentially are), I also wrote a version (`nobranch.cc`) that doesn't have any conditional statements: the entire conversion is computed as one (fairly complex) arithmetic and logical expression. Looking at the compiled asm code, we can verify there are no branches. This is a neat trick in instances where branch prediction performns poorly and we want to try to eliminate all branches. In this example, however, it added too much complexity (too many instructions), running slower than the previous version. (This version is also uses the template trick to unroll convert_all).
+
+# Summary
 
 The following table summarizes the performance of all of these versions. The performance is the minimum run time (among 5,000 iterations) on a Xeon E5-2695v3 CPU on Linux 4.4.0-139 using g++ v. 5.5 and Boost v. 1.58 (g++ v. 8.1, 7.4 and 6.5 proved to be slower on the last example). It is ordered in ascending speedup relative to `atoi()`. In addition, the last column also shows run time when compiled with clang++ v. 6.0.0.
 
@@ -165,6 +171,7 @@ The following table summarizes the performance of all of these versions. The per
 | avx        |  805% | 0.007366 | 0.007049 | 0.006134 |
 | lut1       |  827% | 0.007167 | 0.007090 | 0.005199 |
 | bits       |  841% | 0.007053 | 0.006925 | 0.005634 |
+| nobranch   |  867% | 0.006842 | 0.010542 | 0.006820 |
 | naive      |  957% | 0.006195 | 0.008772 | 0.006328 |
 | bits-satoi | 1035% | 0.005729 | 0.005214 | 0.005274 |
 | lut3       | 1104% | 0.005367 | 0.007224 | 0.003933 |
@@ -177,9 +184,10 @@ The following table summarizes the performance of all of these versions. The per
 | unroll4    | 1517% | 0.003908 | 0.004159 | 0.004687 |
 | defered2   | 1532% | 0.003869 | 0.004323 | 0.005575 |
 | defered3   | 1637% | 0.003622 | 0.006599 | 0.005431 |
+| defered4   | 1680% | 0.003528 | 0.006546 | 0.005014 |
 
-Here's the same data in visual form:
+Here's the same data in visual form (without Boost, which was even slower than atoi):
 
 ![performance-chart](performance-comparison.png)
 
-It is interesting how many different solutions exist to the same simple problem, with most handily beating an optimized library function when tailoring it to a specific workload and assumptions. The best example here gets a reduction of some 94% of the original run time, which was pretty fast to begin with!
+It is interesting how many different solutions exist to the same simple problem, with most handily beating an optimized library function when tailoring it to a specific workload and assumptions. The best example here gets a reduction of nearly 95% of the original run time, which was pretty fast to begin with!

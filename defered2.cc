@@ -1,7 +1,7 @@
 /*
  * An improved version of reorder.cc that defers the substraction of the
  * 'zero' basis from the digits to the end, as opposed to substracting
- * from each digit separately.
+ * from each digit separately (combinining reorder.cc with defered1.cc)
  */
 
 #include "converter.h"
