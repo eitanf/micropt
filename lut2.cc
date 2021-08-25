@@ -5,42 +5,47 @@
  * precomputed results for that string. The mapping is done by
  * mashing together the only 16 significant bits out of the 4 bytes
  * into a 2-byte array index.
- * This version intentionally leaks memory, and should probably be 
- * rewritten to use constexpr instead of static.
  */
 #include "converter.h"
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <array>
 
-inline constexpr uint16_t compress_4char_str(const char* str)
+inline constexpr uint16_t
+compress_4char_str(const char str[4])
 {
   return
-    (*reinterpret_cast<const uint32_t*>(str) & 0x0F) |
-    (*reinterpret_cast<const uint32_t*>(str) & 0x0F00) >> 4 |
-    (*reinterpret_cast<const uint32_t*>(str) & 0x0F0000) >> 8 |
-    (*reinterpret_cast<const uint32_t*>(str) & 0x0F000000) >> 12;
+    (str[3] & 0x0F) |
+    (str[2] & 0x0F) << 4 |
+    (str[1] & 0x0F) << 8 |
+    (str[0] & 0x0F) << 12;
 }
 
-static constexpr size_t TABLE_SIZE = 1<<16;
+constexpr size_t TABLE_SIZE = 1<<16;
+using lut_t = std::array<quote_t, TABLE_SIZE>;
 
-quote_t *compute_lut()
+constexpr lut_t
+compute_lut()
 {
-  static quote_t *lut = (quote_t *)malloc(sizeof(quote_t) * TABLE_SIZE);
-  char str[5];
+  lut_t lut { 0 };
+  char buf[5] = "0000";
+
   for (unsigned i = 1000; i < 10000; i++) {
-    sprintf(str, "%u", i);
-    lut[compress_4char_str(str)] = i;
+    buf[3] = (i % 10) + '0';
+    buf[2] = (i % 100 / 10) + '0';
+    buf[1] = (i % 1000 / 100) + '0';
+    buf[0] = (i / 1000) + '0';
+    lut[compress_4char_str(buf)] = i;
   }
   return lut;
 }
+
+constexpr auto lut = compute_lut();
 
 inline quote_t fast_atoi(const char* str)
 {
   if (str[4] != '\0') {
     return atoi(str);
   }
-  static auto lut = compute_lut();
   const quote_t ret = lut[compress_4char_str(str)];
   return ret;
 }
