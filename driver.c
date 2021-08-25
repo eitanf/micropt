@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  printf("Best run time overall: %gs\n", min_t);
+  printf("Best run time overall (sec): %g\n", min_t);
   free(nums);
   free(lines);
   free(data);
