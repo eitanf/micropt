@@ -98,6 +98,10 @@ Unlike many of the methods till now (including Naive), this version is no longer
 
 This version (`reorder.cc`) adds two small but measurable improvements to `satoi.cc`: forcing the initial 3-digit value to be computed with the `lea` trick mentioned in Naive, and reordering the branches so that the most common cases are eliminated first.
 
+### Bit-gather-based lookup
+
+This version (`pext.cc`) is nearly identical to lut2.cc, except it uses the `_pext_u32` intrinsic to quickly compute a 16-bit index out of a 4-byte numeric string. It also incorporates the unrolling technique.
+
 ### Defered zeros
 
 This version (`defered1.cc`) by a student cleverly defers the substraction of the '0' characters from the digits till after the conversion has been done, and then takes care of it in a single substraction. It also uses GCC's intrisinc to help the compiler anticipate which branches are more likely than others. In my experiments, these hints do nothing to help, because the CPU can predict branches quite accurately, but usually don't hurt either.
