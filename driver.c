@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
   rewind(fin);
 
   // Read in file and parse EOL tokens:
-  char *data = (char *)malloc(datasize);
+  char *data = (char *)malloc(datasize + 1);
   if (fread(data, 1, datasize, fin) < 1) {
     perror("read input file");
     exit(-5);
