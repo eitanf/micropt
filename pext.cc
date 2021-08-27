@@ -10,6 +10,9 @@
  *
  * This version intentionally leaks memory, and should probably be 
  * rewritten to use constexpr instead of static once pext_u32 supports it.
+ *
+ * Also note that for AMD processors prior to Zen 3, pext is implemented in
+ * microcode (18-cycle latency), which is much slower than Intel.
  */
 #include "converter.h"
 
@@ -18,16 +21,18 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-inline uint16_t compress_4char_str(const char* str)
+using short_quote_t = uint16_t;
+
+inline short_quote_t compress_4char_str(const char* str)
 {
   return _pext_u32(*reinterpret_cast<const unsigned int*>(str), 0x0F0F0F0F);
 }
 
-static constexpr size_t TABLE_SIZE = 1<<16;
+static constexpr size_t TABLE_SIZE = 0x9FFF;
 
-quote_t *compute_lut()
+short_quote_t *compute_lut()
 {
-  static quote_t *lut = (quote_t *)malloc(sizeof(quote_t) * TABLE_SIZE);
+  static short_quote_t *lut = (short_quote_t *)malloc(sizeof(short_quote_t) * TABLE_SIZE);
   char str[5];
   for (unsigned i = 1000; i < 10000; i++) {
     sprintf(str, "%u", i);
