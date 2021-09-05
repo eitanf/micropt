@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
   rewind(fin);
 
   // Read in file and parse EOL tokens:
-  char *data = (char *)malloc(datasize + 1);
+  char *data = (char *)calloc(datasize + 1, 1);
   if (fread(data, 1, datasize, fin) < 1) {
     perror("read input file");
     exit(-5);
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 
   for (int iter = 0; iter < niter; ++iter) {
     if (!(iter % 1000)) {
-      printf("On iteration #%d\n", iter);
+      printf("On iteration #%d\tBest so far: %g\n", iter, min_t);
     }
     swap_random_pair(lines, nlines);
 

@@ -9,6 +9,7 @@
 #include "converter.h"
 
 #include <array>
+#include <cstdlib>
 
 inline constexpr uint16_t
 compress_4char_str(const char str[4])
@@ -20,7 +21,7 @@ compress_4char_str(const char str[4])
     (str[0] & 0x0F) << 12;
 }
 
-constexpr size_t TABLE_SIZE = 1<<16;
+constexpr std::size_t TABLE_SIZE = 1<<16;
 using lut_t = std::array<quote_t, TABLE_SIZE>;
 
 constexpr lut_t
