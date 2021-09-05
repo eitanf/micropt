@@ -162,36 +162,32 @@ We can improved further in yet another variation (`defered4.cc`) that breaks dow
 
 Because having a lot of instructions is not necessarily bad (but branches potentially are), I also wrote a version (`nobranch.cc`) that doesn't have any conditional statements: the entire conversion is computed as one (fairly complex) arithmetic and logical expression. Looking at the compiled asm code, we can verify there are no branches. This is a neat trick in instances where branch prediction performns poorly and we want to try to eliminate all branches. In this example, however, it added too much complexity (too many instructions), running slower than the previous version. (This version is also uses the template trick to unroll convert_all).
 
-# Summary
+# Benchmarking
 
-The following table summarizes the performance of all of these versions. The performance is the minimum run time (among 5,000 iterations) on a Xeon E5-2695v3 CPU on Linux 4.4.0-139 using g++ v. 5.5 and Boost v. 1.58 (g++ v. 8.1, 7.4 and 6.5 proved to be slower on the last example). It is ordered in ascending speedup relative to `atoi()`. In addition, the last column also shows run time when compiled with clang++ v. 6.0.0.
+There is a script called `compile.sh` that can build all of these versions for your choice of compiler (passed via the `CC` environment variable. There are no external dependencies except for the Boost library for `boost.cc`.
+Once compiled, you can benchmark all of the binaries using the `run.sh` script.
+It outputs in CSV format with the name of the program (algorithm), CPU and compiler information, number of iterations, and minimum runtime (sec). For iterations, 5,000 appears to be a decent choice.
 
-| filename | speedup | g++-5 E2695v3 (s) | clang-6 E2695v3 (s) | g++-5 1950x (s) |
-| ---------- | ----- | -------- | -------- | -------- |
-| boost      |   74% | 0.080053 | 0.092607 | 0.065608 |
-| atoi       |  100% | 0.059286 | 0.059126 | 0.052520 |
-| sse        |  319% | 0.018580 | 0.022447 | 0.012105 |
-| lut2       |  501% | 0.011824 | 0.010519 | 0.008738 |
-| avx        |  805% | 0.007366 | 0.007049 | 0.006134 |
-| lut1       |  827% | 0.007167 | 0.007090 | 0.005199 |
-| bits       |  841% | 0.007053 | 0.006925 | 0.005634 |
-| nobranch   |  867% | 0.006842 | 0.010542 | 0.006820 |
-| naive      |  957% | 0.006195 | 0.008772 | 0.006328 |
-| bits-satoi | 1035% | 0.005729 | 0.005214 | 0.005274 |
-| lut3       | 1104% | 0.005367 | 0.007224 | 0.003933 |
-| unroll3    | 1155% | 0.005131 | 0.008669 | 0.005364 |
-| unroll1    | 1161% | 0.005106 | 0.010113 | 0.005133 |
-| unroll2    | 1277% | 0.004642 | 0.009518 | 0.004890 |
-| satoi      | 1326% | 0.004470 | 0.004646 | 0.005113 |
-| defered1   | 1347% | 0.004402 | 0.004243 | 0.005592 |
-| reorder    | 1416% | 0.004186 | 0.004229 | 0.005429 |
-| unroll4    | 1517% | 0.003908 | 0.004159 | 0.004687 |
-| defered2   | 1532% | 0.003869 | 0.004323 | 0.005575 |
-| defered3   | 1637% | 0.003622 | 0.006599 | 0.005431 |
-| defered4   | 1680% | 0.003528 | 0.006546 | 0.005014 |
+You can find the results from various benchmarking runs I've conducted in `perfdata.csv`.
 
-Here's the same data in visual form (without Boost, which was even slower than atoi):
+# Performance
 
-![performance-chart](performance-comparison.png)
+The following bar chart shows the absolute performance of these algorithms on a Xeon E52695 v3 CPU with 256GB of RAM (Linux kernel 5.4.0-80), `g++` ver. 10.3.0, and 5,000 iterations. The compiler flags were: `-Ofast -DNDEBUG -std=c++17 -march=native  -Wall -Wextra -pedantic` and `libboost-all-dev` ver. 1.71.
 
-It is interesting how many different solutions exist to the same simple problem, with most handily beating an optimized library function when tailoring it to a specific workload and assumptions. The best example here gets a reduction of nearly 95% of the original run time, which was pretty fast to begin with!
+![g++ performance](base-2695-g++10.png)
+
+The speedup numbers (in red) are relative to `atoi`'s performance. For this architecture and compiler, `pext` appears to be the fastest implementation.
+
+Rerunning the same test with `clang++` ver. 12.0.0 yields very different results, as shown in the following chart:
+
+![clang++ performance](base-2695-clang++12.png)
+
+We can also look at how the performance for the different programs vary over time (compiler versions) in the following chart:
+
+![performance over versions](compiler-comparison.png)
+
+For most of these programs, g++ produces better performance than clang++ (lower run times), but it varies across versions. It's interesting to note that the performance of the istandard C library version `atoi()`, has improved significantly over time, making the speedup improvements of the custom implementations less dramatic.
+
+## Summary
+
+One of the conclusions of this experiments (and perhaps the most disappointing one) is they're inconsistent. There is no compiler that's always better than the other for all benchmarks, and no compiler version that consistently outperforms the others. It means that in practice, to optimize a specific piece of code, you may have to benchmark numerous compilers and versions, You also can't generalize the results to variations of this program and may have to rerun all measurements again.
